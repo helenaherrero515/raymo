@@ -2,7 +2,7 @@
   <img src="assets/logo/logo.png" alt="Micro-Screamer logo" width="140">
 </p>
 
-<h1 align="center">Micro-Screamer</h1>
+<h1 align="center">RayMo</h1>
 
 <p align="center">
   <b>Built for Codex DevDay Mini Hackathon 🚀</b><br>
