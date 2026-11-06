@@ -1,92 +1,196 @@
 <!DOCTYPE html>
 <html>
-<head><title>RayMo Audio Engine</title></head>
+<head>
+  <meta charset="utf-8">
+  <title>RayMo Audio Engine</title>
+</head>
 <body>
 <script>
-/* ── RayMo Web Audio Synth: Multi-voice procedural screaming ── */
+/* ── RayMo Zero-Asset Synthetic Audio Engine ── */
+console.log('[RayMo Audio Engine] Offscreen document loaded and active');
 
-let ctx = null;
-const voices = {};
+const audioElements = {}; // tabId -> HTMLAudioElement
+let webAudioCtx = null;
+const webAudioVoices = {};
 
-function getContext() {
-  if (!ctx) {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
+// Helper: Write string to DataView
+function writeStr(view, offset, str) {
+  for (let i = 0; i < str.length; i++) {
+    view.setUint8(offset + i, str.charCodeAt(i));
   }
-  if (ctx.state === 'suspended') {
-    ctx.resume();
-  }
-  return ctx;
 }
 
-chrome.runtime.onMessage.addListener(msg => {
-  if (msg.type === 'PLAY_AUDIO') return playTab(msg.tabId, msg.stage);
-  if (msg.type === 'STOP_AUDIO') return stopTab(msg.tabId);
-  if (msg.type === 'STOP_ALL')   return Object.keys(voices).forEach(id => stopTab(Number(id)));
-});
+// Generate in-memory synthetic 16-bit PCM WAV (no sound files needed)
+function createSyntheticVoiceWav(type, freq, durationSec, vibHz, vibDepth, tremHz, vol) {
+  const sampleRate = 22050;
+  const numSamples = Math.floor(sampleRate * durationSec);
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view = new DataView(buffer);
 
-/*
-  Each stage escalates in frequency, volume, and modulation:
-  Stage 0: 🥺 whimper
-  Stage 1: 😠 annoyance
-  Stage 2: 😡 loud confrontation
-  Stage 3: 🤬 drowning meltdown
-*/
-const STAGES = [
-  { wave: 'sine',     freq: 210, vol: 0.08, vibHz: 4.5, vibD: 30,  tremHz: 2.0, tremD: 0.05 },
-  { wave: 'triangle', freq: 320, vol: 0.13, vibHz: 6.5, vibD: 55,  tremHz: 3.5, tremD: 0.08 },
-  { wave: 'sawtooth', freq: 460, vol: 0.18, vibHz: 8.5, vibD: 85,  tremHz: 5.5, tremD: 0.11 },
-  { wave: 'square',   freq: 640, vol: 0.24, vibHz: 12.0, vibD: 130, tremHz: 8.5, tremD: 0.15 }
+  // RIFF Chunk
+  writeStr(view, 0, 'RIFF');
+  view.setUint32(4, 36 + numSamples * 2, true);
+  writeStr(view, 8, 'WAVE');
+
+  // fmt Subchunk
+  writeStr(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // Linear PCM
+  view.setUint16(22, 1, true); // Mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true); // 16-bit
+
+  // data Subchunk
+  writeStr(view, 36, 'data');
+  view.setUint32(40, numSamples * 2, true);
+
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    // Vibrato pitch wobble
+    const currentFreq = freq + Math.sin(2 * Math.PI * vibHz * t) * vibDepth;
+    // Tremolo volume pulse
+    const currentVol = vol * (0.65 + 0.35 * Math.sin(2 * Math.PI * tremHz * t));
+
+    let sample = 0;
+    const phase = (t * currentFreq) % 1;
+    if (type === 'sine') {
+      sample = Math.sin(2 * Math.PI * phase);
+    } else if (type === 'triangle') {
+      sample = phase < 0.5 ? (4 * phase - 1) : (3 - 4 * phase);
+    } else if (type === 'sawtooth') {
+      sample = 2 * phase - 1;
+    } else if (type === 'square') {
+      sample = phase < 0.5 ? 1 : -1;
+    }
+
+    const val = Math.max(-32768, Math.min(32767, Math.floor(sample * currentVol * 32767)));
+    view.setInt16(44 + i * 2, val, true);
+  }
+
+  const blob = new Blob([buffer], { type: 'audio/wav' });
+  return URL.createObjectURL(blob);
+}
+
+const STAGE_CONFIGS = [
+  // Stage 0: 🥺 Whimper — Soft wobbly sine wave
+  { wave: 'sine',     freq: 220, dur: 2.0, vibHz: 4.5, vibD: 35,  tremHz: 2.0, vol: 0.35 },
+  // Stage 1: 😠 Annoyance — Nasal triangle wave
+  { wave: 'triangle', freq: 340, dur: 1.8, vibHz: 6.5, vibD: 60,  tremHz: 3.5, vol: 0.48 },
+  // Stage 2: 😡 Confrontation — Harsh sawtooth wave
+  { wave: 'sawtooth', freq: 480, dur: 1.5, vibHz: 8.5, vibD: 95,  tremHz: 5.5, vol: 0.60 },
+  // Stage 3: 🤬 Drowning Meltdown — Piercing loud square wave
+  { wave: 'square',   freq: 660, dur: 1.2, vibHz: 12.0, vibD: 140, tremHz: 8.5, vol: 0.75 }
 ];
 
 function playTab(tabId, stage) {
   stopTab(tabId);
-  const audioCtx = getContext();
+  const cfg = STAGE_CONFIGS[stage] || STAGE_CONFIGS[0];
+  const offset = (tabId % 7) * 28; // Unique frequency offset per tab for screaming chorus
+  const targetFreq = cfg.freq + offset;
 
-  const c = STAGES[stage] || STAGES[0];
-  const offset = (tabId % 7) * 26; // Detuning per tab so multiple tabs create a chorus
+  console.log(`[RayMo Audio] Playing scream for tab ${tabId} (Stage ${stage}) at ${targetFreq}Hz`);
 
-  // Main oscillator
-  const osc = audioCtx.createOscillator();
-  osc.type = c.wave;
-  osc.frequency.value = c.freq + offset;
+  try {
+    // 1. Generate custom synthetic wav URL
+    const wavUrl = createSyntheticVoiceWav(
+      cfg.wave,
+      targetFreq,
+      cfg.dur,
+      cfg.vibHz + (tabId % 3),
+      cfg.vibD,
+      cfg.tremHz,
+      cfg.vol
+    );
 
-  // Pitch Wobble (Vibrato)
-  const vib = audioCtx.createOscillator();
-  vib.frequency.value = c.vibHz + (tabId % 3);
-  const vibGain = audioCtx.createGain();
-  vibGain.gain.value = c.vibD;
-  vib.connect(vibGain).connect(osc.frequency);
+    // 2. Play via HTML5 Audio element (Whitelisted by Chrome offscreen AUDIO_PLAYBACK)
+    const audio = new Audio();
+    audio.src = wavUrl;
+    audio.loop = true;
+    audio.volume = 1.0;
+    audio.play().then(() => {
+      console.log(`[RayMo Audio] Audio element playback started for tab ${tabId}`);
+    }).catch(err => {
+      console.warn(`[RayMo Audio] HTML Audio play error:`, err);
+    });
 
-  // Volume Tremolo Pulse (Sobbing / screeching)
-  const trem = audioCtx.createOscillator();
-  trem.frequency.value = c.tremHz;
-  const tremGain = audioCtx.createGain();
-  tremGain.gain.value = c.tremD;
+    audioElements[tabId] = { audio, url: wavUrl };
+  } catch (err) {
+    console.error(`[RayMo Audio] Error generating synthetic voice:`, err);
+  }
 
-  // Master Gain
-  const master = audioCtx.createGain();
-  master.gain.value = c.vol;
-  trem.connect(tremGain).connect(master.gain);
+  // 3. Also trigger Web Audio API as complementary layer
+  try {
+    if (!webAudioCtx) {
+      webAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (webAudioCtx.state === 'suspended') {
+      webAudioCtx.resume();
+    }
+    const osc = webAudioCtx.createOscillator();
+    osc.type = cfg.wave;
+    osc.frequency.value = targetFreq;
 
-  osc.connect(master).connect(audioCtx.destination);
+    const gain = webAudioCtx.createGain();
+    gain.gain.value = cfg.vol * 0.4;
+    osc.connect(gain).connect(webAudioCtx.destination);
+    osc.start();
 
-  osc.start();
-  vib.start();
-  trem.start();
-
-  voices[tabId] = { osc, vib, trem };
+    webAudioVoices[tabId] = { osc, gain };
+  } catch (e) {
+    // Non-fatal if WebAudio context is restricted
+  }
 }
 
 function stopTab(tabId) {
-  const v = voices[tabId];
-  if (!v) return;
-  try {
-    v.osc.stop();
-    v.vib.stop();
-    v.trem.stop();
-  } catch (e) {}
-  delete voices[tabId];
+  // Stop HTML audio element
+  if (audioElements[tabId]) {
+    try {
+      audioElements[tabId].audio.pause();
+      URL.revokeObjectURL(audioElements[tabId].url);
+    } catch (e) {}
+    delete audioElements[tabId];
+  }
+
+  // Stop Web Audio node
+  if (webAudioVoices[tabId]) {
+    try {
+      webAudioVoices[tabId].osc.stop();
+      webAudioVoices[tabId].osc.disconnect();
+    } catch (e) {}
+    delete webAudioVoices[tabId];
+  }
 }
+
+function stopAll() {
+  console.log('[RayMo Audio] Stopping all audio voices');
+  Object.keys(audioElements).forEach(id => stopTab(Number(id)));
+  Object.keys(webAudioVoices).forEach(id => stopTab(Number(id)));
+}
+
+// ── Message Listener ──
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'PLAY_AUDIO') {
+    playTab(msg.tabId, msg.stage);
+    sendResponse({ ok: true });
+    return false;
+  }
+  if (msg.type === 'STOP_AUDIO') {
+    stopTab(msg.tabId);
+    sendResponse({ ok: true });
+    return false;
+  }
+  if (msg.type === 'STOP_ALL') {
+    stopAll();
+    sendResponse({ ok: true });
+    return false;
+  }
+  if (msg.type === 'PING') {
+    sendResponse({ ready: true });
+    return false;
+  }
+});
 </script>
 </body>
 </html>

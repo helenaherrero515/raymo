@@ -9,35 +9,48 @@ const LINES = [
   ['LULUBOG NA AKO!!', 'WALA NA FINISH NA', 'I TRUSTED YOU', 'BLOCKED AND REPORTED', 'NAGHIHINGALO NA TABS MO']
 ];
 
-const state = {}; // tabId → { lastActive, stage }
+const state = {}; // tabId -> { lastActive, stage, audioPlaying }
 
-// ── Offscreen document (Audio playback) ──────────────────────────────
+// ── Offscreen Document Manager ──
 async function ensureOffscreen() {
   if (chrome.offscreen && chrome.offscreen.hasDocument) {
-    if (await chrome.offscreen.hasDocument()) return;
+    try {
+      if (await chrome.offscreen.hasDocument()) return;
+    } catch (e) {}
   }
   try {
     await chrome.offscreen.createDocument({
       url: 'offscreen.html',
       reasons: ['AUDIO_PLAYBACK'],
-      justification: 'Playing tab accountability screaming alerts'
+      justification: 'Playing synthetic tab accountability alerts'
     });
+    // Brief breather for the document script to initialize
+    await new Promise(r => setTimeout(r, 80));
   } catch (err) {
-    // Already exists or creation in progress
+    // Already created or in progress
   }
 }
 
-// ── Settings helper ─────────────────────────────────────────────────
-async function getSettings() {
-  const d = await chrome.storage.local.get(['demoMode', 'muted']);
-  return { demo: !!d.demoMode, muted: !!d.muted };
+async function sendAudio(msg) {
+  try {
+    await ensureOffscreen();
+    chrome.runtime.sendMessage(msg).catch(() => {});
+  } catch (e) {}
 }
 
-// ── Main check loop ─────────────────────────────────────────────────
+// ── Settings ──
+async function getSettings() {
+  const d = await chrome.storage.local.get(['demoMode', 'muted']);
+  // Default to Demo mode true if unconfigured
+  const demo = d.demoMode !== undefined ? !!d.demoMode : true;
+  return { demo, muted: !!d.muted };
+}
+
+// ── Core Tab Monitoring Loop ──
 async function checkTabs() {
   const { demo, muted } = await getSettings();
   const threshold = demo ? 10_000 : 600_000;   // 10s demo / 10m normal
-  const stageStep = demo ? 10_000 : 600_000;   // time per rage level
+  const stageStep = demo ? 10_000 : 600_000;   // time per escalation stage
 
   let allTabs = [];
   let activeTabs = [];
@@ -53,15 +66,17 @@ async function checkTabs() {
 
   for (const tab of allTabs) {
     const id = tab.id;
-    if (!state[id]) state[id] = { lastActive: Date.now(), stage: -1 };
+    if (!state[id]) {
+      state[id] = { lastActive: Date.now(), stage: -1, audioPlaying: false };
+    }
 
-    // Active tab or tab playing media → peaceful
+    // Active tab or playing audio -> PEACEFUL & SILENT
     if (activeIds.has(id) || tab.audible) {
       if (state[id].stage >= 0) {
         chrome.tabs.sendMessage(id, { type: 'RESTORE' }).catch(() => {});
         sendAudio({ type: 'STOP_AUDIO', tabId: id });
       }
-      state[id] = { lastActive: Date.now(), stage: -1 };
+      state[id] = { lastActive: Date.now(), stage: -1, audioPlaying: false };
       continue;
     }
 
@@ -71,25 +86,27 @@ async function checkTabs() {
     const newStage = Math.min(3, Math.floor((elapsed - threshold) / stageStep));
     screamCount++;
 
-    if (newStage === state[id].stage) continue;
+    const needsVisual = (newStage !== state[id].stage);
+    const needsAudio = (!muted && (!state[id].audioPlaying || newStage !== state[id].stage));
+
     state[id].stage = newStage;
 
-    // Send visual rage to tab
-    const lines = LINES[newStage];
-    chrome.tabs.sendMessage(id, {
-      type: 'SCREAM',
-      emoji: EMOJIS[newStage],
-      line: lines[Math.floor(Math.random() * lines.length)]
-    }).catch(() => {});
+    if (needsVisual) {
+      const lines = LINES[newStage];
+      chrome.tabs.sendMessage(id, {
+        type: 'SCREAM',
+        emoji: EMOJIS[newStage],
+        line: lines[Math.floor(Math.random() * lines.length)]
+      }).catch(() => {});
+    }
 
-    // Send audio scream to offscreen synth
-    if (!muted) {
-      await ensureOffscreen();
+    if (needsAudio) {
+      state[id].audioPlaying = true;
       sendAudio({ type: 'PLAY_AUDIO', tabId: id, stage: newStage });
     }
   }
 
-  // Update extension badge
+  // Update badge counter
   try {
     chrome.action.setBadgeBackgroundColor({ color: '#c0392b' });
     chrome.action.setBadgeText({ text: screamCount > 0 ? String(screamCount) : '' });
@@ -98,11 +115,7 @@ async function checkTabs() {
   return screamCount;
 }
 
-function sendAudio(msg) {
-  chrome.runtime.sendMessage(msg).catch(() => {});
-}
-
-// ── Event listeners ─────────────────────────────────────────────────
+// ── Event Handlers ──
 chrome.tabs.onActivated.addListener(() => checkTabs());
 
 chrome.tabs.onRemoved.addListener(tabId => {
@@ -110,13 +123,13 @@ chrome.tabs.onRemoved.addListener(tabId => {
   sendAudio({ type: 'STOP_AUDIO', tabId });
 });
 
-// Message hub
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+// Runtime messaging
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'GET_STATUS') {
     const screaming = Object.values(state).filter(s => s.stage >= 0).length;
-    const stages = Object.values(state).map(s => s.stage);
+    const stages = Object.values(state).map(s => s.stage).filter(st => st >= 0);
     sendResponse({ screaming, stages, total: Object.keys(state).length });
-    return false; // synchronous response
+    return false;
   }
 
   if (msg.type === 'FORCE_DEMO_SCREAM') {
@@ -126,11 +139,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       const activeTabs = await chrome.tabs.query({ active: true });
       const activeIds = new Set(activeTabs.map(t => t.id));
 
+      await ensureOffscreen();
+
       let stageIdx = 0;
       for (const tab of allTabs) {
         if (!activeIds.has(tab.id)) {
           const s = stageIdx % 4;
-          state[tab.id] = { lastActive: Date.now() - 50_000, stage: s };
+          state[tab.id] = { lastActive: Date.now() - 50_000, stage: s, audioPlaying: true };
+
           chrome.tabs.sendMessage(tab.id, {
             type: 'SCREAM',
             emoji: EMOJIS[s],
@@ -138,7 +154,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           }).catch(() => {});
 
           if (!muted) {
-            await ensureOffscreen();
             sendAudio({ type: 'PLAY_AUDIO', tabId: tab.id, stage: s });
           }
           stageIdx++;
@@ -147,13 +162,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       checkTabs();
       sendResponse({ ok: true });
     })();
-    return true; // async
+    return true; // async response
   }
 
   if (msg.type === 'CALM_ALL') {
     for (const id in state) {
       chrome.tabs.sendMessage(Number(id), { type: 'RESTORE' }).catch(() => {});
-      state[id] = { lastActive: Date.now(), stage: -1 };
+      state[id] = { lastActive: Date.now(), stage: -1, audioPlaying: false };
     }
     sendAudio({ type: 'STOP_ALL' });
     checkTabs();
@@ -168,7 +183,7 @@ chrome.storage.onChanged.addListener(async changes => {
       if (state[id].stage >= 0) {
         chrome.tabs.sendMessage(Number(id), { type: 'RESTORE' }).catch(() => {});
       }
-      state[id] = { lastActive: Date.now(), stage: -1 };
+      state[id] = { lastActive: Date.now(), stage: -1, audioPlaying: false };
     }
     sendAudio({ type: 'STOP_ALL' });
   }
@@ -176,16 +191,21 @@ chrome.storage.onChanged.addListener(async changes => {
   if (changes.muted) {
     if (changes.muted.newValue) {
       sendAudio({ type: 'STOP_ALL' });
+      for (const id in state) {
+        if (state[id]) state[id].audioPlaying = false;
+      }
     } else {
-      await ensureOffscreen();
       for (const [id, s] of Object.entries(state)) {
-        if (s.stage >= 0) sendAudio({ type: 'PLAY_AUDIO', tabId: Number(id), stage: s.stage });
+        if (s.stage >= 0) {
+          state[id].audioPlaying = true;
+          sendAudio({ type: 'PLAY_AUDIO', tabId: Number(id), stage: s.stage });
+        }
       }
     }
   }
   checkTabs();
 });
 
-// Check every 2 seconds
+// Periodic monitoring every 2 seconds
 setInterval(checkTabs, 2000);
 checkTabs();
