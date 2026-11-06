@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 272px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    padding: 20px;
+    background: #fafafa;
+    color: #1a1a1a;
+  }
+  .logo { font-size: 13px; font-weight: 700; letter-spacing: .3px; }
+  .sub  { font-size: 10.5px; color: #777; margin: 2px 0 18px; line-height: 1.4; }
+  label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; font-size: 12.5px; cursor: pointer;
+    border-top: 1px solid #eee; user-select: none;
+  }
+  label:first-of-type { border-top: none; }
+  input[type="checkbox"] {
+    width: 15px; height: 15px; accent-color: #c0392b; flex-shrink: 0;
+  }
+  .status {
+    margin-top: 16px; padding: 10px 12px;
+    background: #f0f0f0; border-radius: 6px;
+    font-size: 10.5px; color: #888; line-height: 1.45;
+  }
+  .dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: #2ecc71; border-radius: 50%; margin-right: 5px;
+    vertical-align: middle;
+  }
+  .dot.alert { background: #c0392b; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .4; } }
+</style>
+</head>
+<body>
+  <div class="logo">MICRO-SCREAMER</div>
+  <div class="sub">Tab accountability &amp; productivity compliance.</div>
+
+  <label><input type="checkbox" id="demo"> Demo mode (10&nbsp;seconds)</label>
+  <label><input type="checkbox" id="mute"> Mute the screaming</label>
+
+  <div class="status"><span class="dot" id="dot"></span><span id="info">Initializing…</span></div>
+
+<script>
+  const demoEl = document.getElementById('demo');
+  const muteEl = document.getElementById('mute');
+  const dotEl  = document.getElementById('dot');
+  const infoEl = document.getElementById('info');
+
+  // Load saved settings
+  chrome.storage.local.get(['demoMode', 'muted'], d => {
+    demoEl.checked = !!d.demoMode;
+    muteEl.checked = !!d.muted;
+  });
+
+  demoEl.addEventListener('change', () =>
+    chrome.storage.local.set({ demoMode: demoEl.checked }));
+
+  muteEl.addEventListener('change', () =>
+    chrome.storage.local.set({ muted: muteEl.checked }));
+
+  // Poll status while popup is open
+  async function refresh() {
+    const tabs = await chrome.tabs.query({});
+    try {
+      const r = await chrome.runtime.sendMessage({ type: 'GET_STATUS' });
+      const n = r?.screaming ?? 0;
+      dotEl.className = n > 0 ? 'dot alert' : 'dot';
+      infoEl.textContent = `Monitoring ${tabs.length} tab${tabs.length !== 1 ? 's' : ''}. ${n} currently screaming.`;
+    } catch {
+      infoEl.textContent = `Monitoring ${tabs.length} tab${tabs.length !== 1 ? 's' : ''}.`;
+    }
+  }
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>
