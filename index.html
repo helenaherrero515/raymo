@@ -58,26 +58,31 @@ img { max-width: 100%; display: block; }
 .btn-line { background: var(--bg); }
 .btn-line:hover { background: var(--gray); }
 
-/* ── Hero visual — tab stack with meme faces ── */
+/* ── Hero visual — 4-tab stack with all meme faces ── */
 .hero-visual { position: relative; display: flex; justify-content: center;
                align-items: center; }
-.tab-stack { position: relative; width: 360px; height: 380px; }
-.tab-card { position: absolute; width: 240px; background: #fff;
+.tab-stack { position: relative; width: 360px; height: 420px; }
+.tab-card { position: absolute; width: 230px; background: #fff;
             border: 2px solid var(--ink); border-radius: 16px;
-            overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.08);
+            overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.1);
             transition: transform .6s cubic-bezier(.22,1,.36,1); }
 .tab-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-.tab-card .tab-meta { padding: 12px 16px; }
-.tab-card .tab-title { font-size: 12px; font-weight: 700; color: var(--red);
+.tab-card .tab-meta { padding: 10px 14px; }
+.tab-card .tab-title { font-size: 11.5px; font-weight: 700; color: var(--red);
                        letter-spacing: .01em; }
-.tab-card .tab-url { font-size: 10px; color: var(--muted); margin-top: 2px;
+.tab-card .tab-url { font-size: 9.5px; color: var(--muted); margin-top: 2px;
                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tab-card:nth-child(1) { top: 0;    left: 10px;  transform: rotate(-6deg); z-index: 1; }
-.tab-card:nth-child(2) { top: 50px;  left: 80px;  transform: rotate(3deg);  z-index: 2; }
-.tab-card:nth-child(3) { top: 110px; left: 30px;  transform: rotate(-2deg); z-index: 3; }
-.tab-stack:hover .tab-card:nth-child(1) { transform: rotate(-12deg) translateY(-16px); }
-.tab-stack:hover .tab-card:nth-child(2) { transform: rotate(8deg) translate(14px, -8px); }
-.tab-stack:hover .tab-card:nth-child(3) { transform: rotate(-6deg) translateY(12px) translateX(-10px); }
+
+/* 4 distinct layered cards */
+.tab-card:nth-child(1) { top: 0px;   left: 10px;  transform: rotate(-7deg); z-index: 1; }
+.tab-card:nth-child(2) { top: 45px;  left: 75px;  transform: rotate(4deg);  z-index: 2; }
+.tab-card:nth-child(3) { top: 100px; left: 25px;  transform: rotate(-3deg); z-index: 3; }
+.tab-card:nth-child(4) { top: 155px; left: 85px;  transform: rotate(5deg);  z-index: 4; }
+
+.tab-stack:hover .tab-card:nth-child(1) { transform: rotate(-14deg) translateY(-20px); }
+.tab-stack:hover .tab-card:nth-child(2) { transform: rotate(10deg) translate(18px, -12px); }
+.tab-stack:hover .tab-card:nth-child(3) { transform: rotate(-8deg) translateY(10px) translateX(-14px); }
+.tab-stack:hover .tab-card:nth-child(4) { transform: rotate(12deg) translate(22px, 8px); }
 
 .stats { display: flex; flex-wrap: wrap; gap: 20px 40px; margin: 36px 0 0;
          padding-top: 24px; border-top: 2px solid var(--ink); }
@@ -106,7 +111,7 @@ img { max-width: 100%; display: block; }
 .stage-body { padding: 20px 22px 24px; }
 .stage-label { font-size: 12px; font-weight: 700; text-transform: uppercase;
                letter-spacing: .06em; color: var(--muted); }
-.stage-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em;
+.stage-title { font-size: 21px; font-weight: 800; letter-spacing: -.02em;
                margin-top: 6px; }
 .stage-desc { font-size: 14px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
 .stage-line { font-size: 13px; font-weight: 700; color: var(--red); margin-top: 14px;
@@ -196,8 +201,8 @@ code { background: #3a3a3a; border-radius: 6px; padding: 2px 6px; font-size: .92
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; }
   .hero-visual { order: -1; }
-  .tab-stack { width: 280px; height: 300px; }
-  .tab-card { width: 200px; }
+  .tab-stack { width: 280px; height: 340px; }
+  .tab-card { width: 190px; }
   .stages-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 540px) {
@@ -266,10 +271,17 @@ code { background: #3a3a3a; border-radius: 6px; padding: 2px 6px; font-size: .92
     <div class="hero-visual">
       <div class="tab-stack">
         <div class="tab-card">
+          <img src="face-drown.jpg" alt="Drowning pool water choke meme">
+          <div class="tab-meta">
+            <div class="tab-title">LULUBOG NA AKO!!</div>
+            <div class="tab-url">stackoverflow.com/questions/...</div>
+          </div>
+        </div>
+        <div class="tab-card">
           <img src="face-rage.jpg" alt="Enraged face">
           <div class="tab-meta">
-            <div class="tab-title">WALA NA FINISH NA</div>
-            <div class="tab-url">stackoverflow.com/questions/...</div>
+            <div class="tab-title">GRABE KA TALAGA</div>
+            <div class="tab-url">docs.google.com/spreadsheets/...</div>
           </div>
         </div>
         <div class="tab-card">
@@ -298,14 +310,15 @@ code { background: #3a3a3a; border-radius: 6px; padding: 2px 6px; font-size: .92
     <span>NAKA-SEEN LANG AKO??</span><span>·</span>
     <span>miss na kita...</span><span>·</span>
     <span>GRABE KA TALAGA</span><span>·</span>
-    <span>I TRUSTED YOU</span><span>·</span>
+    <span>LULUBOG NA AKO!!</span><span>·</span>
+    <span>WALA NA FINISH NA</span><span>·</span>
     <span>BLOCKED AND REPORTED</span><span>·</span>
     <span>bakit mo ako iniwan?</span><span>·</span>
     <span>NAKA-SEEN LANG AKO??</span><span>·</span>
     <span>miss na kita...</span><span>·</span>
     <span>GRABE KA TALAGA</span><span>·</span>
-    <span>I TRUSTED YOU</span><span>·</span>
-    <span>BLOCKED AND REPORTED</span><span>·</span>
+    <span>LULUBOG NA AKO!!</span><span>·</span>
+    <span>WALA NA FINISH NA</span><span>·</span>
   </div>
 </div>
 
@@ -342,12 +355,12 @@ code { background: #3a3a3a; border-radius: 6px; padding: 2px 6px; font-size: .92
         </div>
       </div>
       <div class="stage-card">
-        <img src="face-rage.jpg" alt="Full rage — the meltdown stage">
+        <img src="face-drown.jpg" alt="Drowning — the meltdown stage">
         <div class="stage-body">
           <div class="stage-label">Stage 4 · 30 s+</div>
-          <div class="stage-title">🤬 The Meltdown</div>
-          <p class="stage-desc">Piercing square wave. Maximum volume. Your tab has given up on diplomacy.</p>
-          <div class="stage-line">"BLOCKED AND REPORTED"</div>
+          <div class="stage-title">🤬 The Drowning Meltdown</div>
+          <p class="stage-desc">Piercing square wave. Maximum volume. Literally gasping and drowning in your neglect.</p>
+          <div class="stage-line">"LULUBOG NA AKO!! WALA NA FINISH NA"</div>
         </div>
       </div>
     </div>
@@ -394,8 +407,8 @@ code { background: #3a3a3a; border-radius: 6px; padding: 2px 6px; font-size: .92
       <div class="float-dot" style="width:70px;height:70px;bottom:40px;right:50px;animation-delay:1.5s">
         <img src="face-sideye.jpg" alt="">
       </div>
-      <div class="float-dot" style="width:56px;height:56px;top:36px;right:110px;animation-delay:3s">
-        <img src="face-rage.jpg" alt="">
+      <div class="float-dot" style="width:64px;height:64px;top:36px;right:110px;animation-delay:3s">
+        <img src="face-drown.jpg" alt="">
       </div>
       <h2>Install in<br>30 seconds.</h2>
       <p class="cta-lede">No store listing. No permissions popup novel. Just load it unpacked and watch your tabs lose it.</p>
@@ -465,7 +478,7 @@ code { background: #3a3a3a; border-radius: 6px; padding: 2px 6px; font-size: .92
         <button class="demo-btn" onclick="playWebAudioDemo(0)">🥺 Whimper (10s)</button>
         <button class="demo-btn" onclick="playWebAudioDemo(1)">😠 Side-Eye (20s)</button>
         <button class="demo-btn" onclick="playWebAudioDemo(2)">😡 Rage (30s)</button>
-        <button class="demo-btn" onclick="playWebAudioDemo(3)">🤬 Screaming (40s)</button>
+        <button class="demo-btn" onclick="playWebAudioDemo(3)">🤬 Drowning Meltdown (40s)</button>
         <button class="demo-btn" onclick="stopWebAudioDemo()" style="background:#fff;color:#555;border-color:#ccc;">⏹ Silence</button>
       </div>
     </div>
