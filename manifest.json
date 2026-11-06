@@ -15,6 +15,18 @@
     "default_title": "RayMo — Tab Screamer",
     "default_icon": "assets/logo/logo.png"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "face-cry.jpg",
+        "face-sideye.jpg",
+        "face-rage.jpg",
+        "face-drown.jpg",
+        "assets/logo/logo.png"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],

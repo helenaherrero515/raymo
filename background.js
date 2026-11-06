@@ -1,6 +1,7 @@
 /* RayMo — Background Service Worker (Tab Screamer Engine) */
 
 const EMOJIS = ['🥺', '😠', '😡', '🤬'];
+const IMAGES = ['face-cry.jpg', 'face-sideye.jpg', 'face-rage.jpg', 'face-drown.jpg'];
 
 const LINES = [
   ['bakit mo ako iniwan?', 'miss na kita...', 'hello? nandito pa ako...', 'pansinin mo naman ako...', 'ang tagal mo na dun ha...'],
@@ -97,6 +98,8 @@ async function checkTabs() {
       chrome.tabs.sendMessage(id, {
         type: 'SCREAM',
         emoji: EMOJIS[newStage],
+        image: IMAGES[newStage],
+        stage: newStage,
         line: lines[Math.floor(Math.random() * lines.length)]
       }).catch(() => {});
     }
@@ -151,6 +154,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           chrome.tabs.sendMessage(tab.id, {
             type: 'SCREAM',
             emoji: EMOJIS[s],
+            image: IMAGES[s],
+            stage: s,
             line: LINES[s][0]
           }).catch(() => {});
 
