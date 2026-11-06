@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Micro-Screamer — Tab Accountability &amp; Productivity Compliance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fdfdfd; --ink: #111; --muted: #565656; --line: #e4e4e4;
+  --red: #c0392b; --orange: #f2730a; --gray: #e8e8e8;
+  --font: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --gutter: clamp(16px, 4vw, 48px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font);
+       -webkit-font-smoothing: antialiased; font-size: 17px; line-height: 1.45; }
+a { color: inherit; text-decoration: none; }
+h1,h2,h3 { text-wrap: balance; }
+
+.wrap { width: 100%; max-width: 1200px; margin: 0 auto;
+        padding-left: var(--gutter); padding-right: var(--gutter); }
+
+/* ── Header ── */
+.header { display: flex; flex-wrap: wrap; justify-content: space-between;
+          align-items: center; gap: 16px; padding: 24px 0; }
+.brand  { font-size: 22px; font-weight: 800; letter-spacing: -.03em;
+          display: flex; align-items: center; gap: 10px; }
+.brand span { font-size: 26px; }
+.nav { display: flex; gap: 28px; font-size: 15px; font-weight: 600; }
+.nav a:hover { text-decoration: underline; text-underline-offset: 6px;
+               text-decoration-thickness: 2px; }
+
+/* ── Hero ── */
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center;
+        gap: 48px; padding: 56px 0 72px; }
+.pill { background: var(--gray); border-radius: 999px; padding: 6px 14px;
+        font-size: 13px; font-weight: 600; display: inline-block; }
+.hero-title { font-size: clamp(44px, 7vw, 88px); font-weight: 800;
+              letter-spacing: -.05em; line-height: .96; margin-top: 20px; }
+.hero-title mark { background: var(--red); color: #fff; border-radius: .22em;
+                   padding: 0 .14em; }
+.lede { color: var(--muted); font-size: 19px; margin-top: 20px; max-width: 32em; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.btn { border: 2px solid var(--ink); border-radius: 999px; padding: 14px 24px;
+       font-size: 17px; font-weight: 700; display: inline-flex; align-items: center;
+       gap: 10px; transition: transform .15s, background .15s; cursor: pointer;
+       font-family: var(--font); }
+.btn:hover { transform: translateY(-2px); }
+.btn-ink  { background: var(--ink); color: #fff; }
+.btn-line { background: var(--bg); }
+.btn-line:hover { background: var(--gray); }
+
+/* ── Hero visual ── */
+.hero-visual { position: relative; display: flex; justify-content: center;
+               align-items: center; }
+.tab-stack { position: relative; width: 340px; height: 340px; }
+.tab-card { position: absolute; width: 260px; background: #fff;
+            border: 2px solid var(--ink); border-radius: 16px; padding: 20px 22px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.08); transition: transform .6s cubic-bezier(.22,1,.36,1); }
+.tab-card .emoji { font-size: 42px; margin-bottom: 8px; }
+.tab-card .tab-title { font-size: 13px; font-weight: 700; color: var(--red);
+                       letter-spacing: .01em; }
+.tab-card .tab-url { font-size: 11px; color: var(--muted); margin-top: 4px;
+                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab-card:nth-child(1) { top: 20px;  left: 10px;  transform: rotate(-6deg); z-index: 1; }
+.tab-card:nth-child(2) { top: 50px;  left: 60px;  transform: rotate(2deg);  z-index: 2; }
+.tab-card:nth-child(3) { top: 80px;  left: 30px;  transform: rotate(-1deg); z-index: 3; }
+.tab-card:nth-child(4) { top: 110px; left: 70px;  transform: rotate(5deg);  z-index: 4; }
+.tab-stack:hover .tab-card:nth-child(1) { transform: rotate(-12deg) translateY(-12px); }
+.tab-stack:hover .tab-card:nth-child(2) { transform: rotate(6deg) translateX(10px); }
+.tab-stack:hover .tab-card:nth-child(3) { transform: rotate(-4deg) translateY(8px); }
+.tab-stack:hover .tab-card:nth-child(4) { transform: rotate(10deg) translate(14px, -6px); }
+
+.stats { display: flex; flex-wrap: wrap; gap: 20px 40px; margin: 36px 0 0;
+         padding-top: 24px; border-top: 2px solid var(--ink); }
+.stats dt { font-size: 34px; font-weight: 800; letter-spacing: -.04em;
+            font-variant-numeric: tabular-nums; }
+.stats dd { color: var(--muted); margin: 0; font-size: 14px; }
+
+/* ── Marquee ── */
+.marquee { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+           padding: 10px 0; overflow: hidden; background: var(--bg); }
+.marquee-track { display: flex; gap: 56px; width: max-content; white-space: nowrap;
+                 font-size: clamp(28px, 5vw, 52px); font-weight: 800;
+                 letter-spacing: -.03em; animation: scroll 28s linear infinite; }
+@keyframes scroll { to { transform: translateX(-50%); } }
+
+/* ── Stages section ── */
+.stages-section { padding: 96px 0; }
+.stages-section h2 { font-size: clamp(36px, 5.5vw, 64px); font-weight: 800;
+                     letter-spacing: -.045em; line-height: 1; }
+.stages-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+               gap: 16px; margin-top: 48px; }
+.stage-card { background: #fff; border: 2px solid var(--line); border-radius: 24px;
+              padding: 28px 24px; transition: transform .2s, border-color .2s; }
+.stage-card:hover { transform: translateY(-4px); border-color: var(--ink); }
+.stage-emoji { font-size: 48px; margin-bottom: 16px; }
+.stage-label { font-size: 12px; font-weight: 700; text-transform: uppercase;
+               letter-spacing: .06em; color: var(--muted); }
+.stage-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em;
+               margin-top: 6px; }
+.stage-desc { font-size: 14px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
+.stage-line { font-size: 13px; font-weight: 700; color: var(--red); margin-top: 14px;
+              font-style: italic; }
+
+/* ── How it works ── */
+.how { padding: 72px 0 48px; }
+.how h2 { font-size: clamp(36px, 5vw, 64px); font-weight: 800;
+           letter-spacing: -.045em; line-height: 1; }
+.how > .lede { margin-bottom: 40px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+         gap: 16px; }
+.card { border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 10px; }
+.card.c1 { background: #fef3e8; }
+.card.c2 { background: #eef6ff; }
+.card.c3 { background: #f0fde8; }
+.card.c4 { background: #fce8f4; }
+.card-icon { width: 48px; height: 48px; background: #fff; border-radius: 999px;
+             display: grid; place-items: center; font-size: 22px; margin-bottom: 12px; }
+.card h3 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.card p  { font-size: 15px; color: var(--muted); line-height: 1.45; }
+
+/* ── CTA ── */
+.cta-wrap { padding: 48px 0 72px; }
+.cta { background: var(--ink); color: #fff; border-radius: 40px; text-align: center;
+       padding: clamp(40px, 7vw, 88px) clamp(20px, 6vw, 72px);
+       display: flex; flex-direction: column; align-items: center; gap: 20px;
+       position: relative; overflow: clip; }
+.cta h2 { font-size: clamp(40px, 8vw, 96px); font-weight: 800;
+          letter-spacing: -.05em; line-height: .95; }
+.cta .cta-lede { color: #d4d4d4; font-size: 18px; max-width: 34em; }
+.steps { text-align: left; counter-reset: step; list-style: none; display: grid;
+         gap: 10px; max-width: 560px; width: 100%; margin: 8px 0 12px; }
+.steps li { counter-increment: step; background: #262626; border-radius: 20px;
+            padding: 14px 18px 14px 56px; font-size: 15px; position: relative; }
+.steps li::before { content: counter(step); background: var(--red); color: #fff;
+                    border-radius: 999px; width: 30px; height: 30px; font-size: 14px;
+                    font-weight: 800; display: grid; place-items: center;
+                    position: absolute; top: 12px; left: 14px; }
+code { background: #3a3a3a; border-radius: 6px; padding: 2px 6px; font-size: .92em; }
+.float-dot { position: absolute; border-radius: 999px; font-weight: 800;
+             display: grid; place-items: center; pointer-events: none;
+             animation: float 6s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+
+/* ── Footer ── */
+.footer { display: flex; flex-wrap: wrap; justify-content: space-between;
+          align-items: center; gap: 16px; padding: 8px 0 40px;
+          color: var(--muted); font-size: 14px; }
+.footer .brand { color: var(--ink); font-size: 18px; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-visual { order: -1; }
+  .tab-stack { width: 280px; height: 280px; }
+  .stages-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 540px) {
+  .stages-grid { grid-template-columns: 1fr; }
+  .nav { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn { transition: none; }
+  .marquee-track { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="wrap">
+  <header class="header">
+    <div class="brand"><span>😱</span> MICRO-SCREAMER</div>
+    <nav class="nav">
+      <a href="#stages">Stages</a>
+      <a href="#how">How it works</a>
+      <a href="#install">Install</a>
+    </nav>
+  </header>
+</div>
+
+<!-- ── Hero ── -->
+<div class="wrap">
+  <section class="hero">
+    <div>
+      <div class="pill">Chrome Extension · Manifest V3</div>
+      <h1 class="hero-title">Your tabs are <mark>crying.</mark></h1>
+      <p class="lede">
+        Micro-Screamer is an enterprise-grade tab accountability system.
+        Neglected tabs grow angry, change their favicon, rename themselves
+        in Taglish, and scream at you with synthetic voices until you pay attention.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ink" href="#install">Install now ↓</a>
+        <a class="btn btn-line" href="#stages">See the stages</a>
+      </div>
+      <dl class="stats">
+        <div><dt>4</dt><dd>Rage stages</dd></div>
+        <div><dt>10 s</dt><dd>Demo-mode threshold</dd></div>
+        <div><dt>0</dt><dd>Sound files needed</dd></div>
+        <div><dt>∞</dt><dd>Guilt delivered</dd></div>
+      </dl>
+    </div>
+    <div class="hero-visual">
+      <div class="tab-stack">
+        <div class="tab-card">
+          <div class="emoji">🤬</div>
+          <div class="tab-title">WALA NA FINISH NA</div>
+          <div class="tab-url">stackoverflow.com/questions/...</div>
+        </div>
+        <div class="tab-card">
+          <div class="emoji">😡</div>
+          <div class="tab-title">ANO BA PROBLEMA MO??</div>
+          <div class="tab-url">docs.google.com/spreadsheets/...</div>
+        </div>
+        <div class="tab-card">
+          <div class="emoji">😠</div>
+          <div class="tab-title">NAKA-SEEN LANG AKO??</div>
+          <div class="tab-url">github.com/your-repo/pull/42</div>
+        </div>
+        <div class="tab-card">
+          <div class="emoji">🥺</div>
+          <div class="tab-title">bakit mo ako iniwan?</div>
+          <div class="tab-url">en.wikipedia.org/wiki/Tab_(int...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── Marquee ── -->
+<div class="marquee">
+  <div class="marquee-track" aria-hidden="true">
+    <span>bakit mo ako iniwan?</span><span>·</span>
+    <span>NAKA-SEEN LANG AKO??</span><span>·</span>
+    <span>miss na kita...</span><span>·</span>
+    <span>GRABE KA TALAGA</span><span>·</span>
+    <span>I TRUSTED YOU</span><span>·</span>
+    <span>BLOCKED AND REPORTED</span><span>·</span>
+    <span>bakit mo ako iniwan?</span><span>·</span>
+    <span>NAKA-SEEN LANG AKO??</span><span>·</span>
+    <span>miss na kita...</span><span>·</span>
+    <span>GRABE KA TALAGA</span><span>·</span>
+    <span>I TRUSTED YOU</span><span>·</span>
+    <span>BLOCKED AND REPORTED</span><span>·</span>
+  </div>
+</div>
+
+<!-- ── Rage Stages ── -->
+<div class="wrap" id="stages">
+  <section class="stages-section">
+    <h2>The four stages of tab grief.</h2>
+    <div class="stages-grid">
+      <div class="stage-card">
+        <div class="stage-emoji">🥺</div>
+        <div class="stage-label">Stage 1 · 0 – 10 s</div>
+        <div class="stage-title">The Whimper</div>
+        <p class="stage-desc">A soft, wobbly sine wave. Barely audible. Your tab just wants to know you still care.</p>
+        <div class="stage-line">"bakit mo ako iniwan?"</div>
+      </div>
+      <div class="stage-card">
+        <div class="stage-emoji">😠</div>
+        <div class="stage-label">Stage 2 · 10 – 20 s</div>
+        <div class="stage-title">The Side-Eye</div>
+        <p class="stage-desc">Nasal triangle wave. Getting louder. It saw you open a new tab. It noticed.</p>
+        <div class="stage-line">"NAKA-SEEN LANG AKO??"</div>
+      </div>
+      <div class="stage-card">
+        <div class="stage-emoji">😡</div>
+        <div class="stage-label">Stage 3 · 20 – 30 s</div>
+        <div class="stage-title">The Confrontation</div>
+        <p class="stage-desc">Harsh sawtooth wave. Your tab is now making a scene. Other tabs are watching.</p>
+        <div class="stage-line">"GRABE KA TALAGA"</div>
+      </div>
+      <div class="stage-card">
+        <div class="stage-emoji">🤬</div>
+        <div class="stage-label">Stage 4 · 30 s+</div>
+        <div class="stage-title">The Meltdown</div>
+        <p class="stage-desc">Piercing square wave. Maximum volume. Your tab has given up on diplomacy.</p>
+        <div class="stage-line">"BLOCKED AND REPORTED"</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── How it works ── -->
+<div class="wrap" id="how">
+  <section class="how">
+    <h2>How it works.</h2>
+    <p class="lede">No servers. No accounts. No sound files. Just pure, synthesized disappointment.</p>
+    <div class="cards">
+      <div class="card c1">
+        <div class="card-icon">⏱️</div>
+        <h3>Idle detection</h3>
+        <p>The service worker checks every 3 seconds. If a tab hasn't been active for the threshold (10 min, or 10 s in demo mode), it enters Stage 1.</p>
+      </div>
+      <div class="card c2">
+        <div class="card-icon">😤</div>
+        <h3>Favicon hijack</h3>
+        <p>A content script replaces the favicon with an SVG emoji that escalates from 🥺 to 🤬. The tab title changes to a Taglish guilt-trip.</p>
+      </div>
+      <div class="card c3">
+        <div class="card-icon">🔊</div>
+        <h3>Synthetic screaming</h3>
+        <p>An offscreen document runs Web Audio oscillators — one per tab. Pitch, volume, and harshness increase with each rage stage. Each tab sounds slightly different.</p>
+      </div>
+      <div class="card c4">
+        <div class="card-icon">🤫</div>
+        <h3>Instant forgiveness</h3>
+        <p>Click any screaming tab and it goes silent instantly. Original title, original favicon, zero grudges held. Until next time.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── Install CTA ── -->
+<div class="wrap" id="install">
+  <div class="cta-wrap">
+    <div class="cta">
+      <div class="float-dot" style="width:80px;height:80px;background:#c0392b;top:30px;left:40px;font-size:36px;animation-delay:0s">🥺</div>
+      <div class="float-dot" style="width:60px;height:60px;background:#f2730a;bottom:50px;right:60px;font-size:28px;animation-delay:1.5s">😡</div>
+      <div class="float-dot" style="width:50px;height:50px;background:#924ff5;top:40px;right:120px;font-size:24px;animation-delay:3s">🤬</div>
+      <h2>Install in<br>30 seconds.</h2>
+      <p class="cta-lede">No store listing. No permissions popup novel. Just load it unpacked and watch your tabs lose it.</p>
+      <ol class="steps">
+        <li>Download or clone the extension folder</li>
+        <li>Open <code>chrome://extensions</code> and enable <strong>Developer mode</strong></li>
+        <li>Click <strong>Load unpacked</strong> → select the folder</li>
+        <li>Click the 😱 icon → check <strong>Demo mode (10 seconds)</strong></li>
+        <li>Open 5 tabs, click away, and wait for the screaming</li>
+      </ol>
+      <a class="btn" style="background:var(--red);border-color:var(--red);color:#fff" href="https://github.com" target="_blank">Get the source ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<div class="wrap">
+  <footer class="footer">
+    <div class="brand"><span>😱</span> MICRO-SCREAMER</div>
+    <p>Built at a hackathon. Not responsible for emotional damage to your tabs.</p>
+  </footer>
+</div>
+
+</body>
+</html>
