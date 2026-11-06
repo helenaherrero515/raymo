@@ -85,7 +85,7 @@ Are you a chronic tab hoarder with 50+ open tabs you will never read? Micro-Scre
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/helenaherrero515/smthfunny.git
+   git clone https://github.com/helenaherrero515/raymo.git
    cd smthfunny
    ```
 2. **Open Extensions in Chrome:**
