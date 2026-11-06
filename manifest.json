@@ -1,15 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "Micro-Screamer",
-  "description": "Enterprise-grade tab accountability compliance system.",
+  "name": "RayMo — Tab Screamer",
+  "description": "Enterprise-grade tab accountability compliance system. Built for Codex DevDay 2026.",
   "version": "1.0.0",
   "permissions": ["tabs", "offscreen", "storage"],
+  "icons": {
+    "128": "assets/logo/logo.png"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Micro-Screamer"
+    "default_title": "RayMo — Tab Screamer",
+    "default_icon": "assets/logo/logo.png"
   },
   "content_scripts": [
     {
