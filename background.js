@@ -11,11 +11,14 @@ const LINES = [
 
 const state = {}; // tabId -> { lastActive, stage, audioPlaying }
 
-// ── Offscreen Document Manager ──
+// ── Offscreen Document Manager (Manifest V3 compliant) ──
 async function ensureOffscreen() {
-  if (chrome.offscreen && chrome.offscreen.hasDocument) {
+  if (chrome.runtime && chrome.runtime.getContexts) {
     try {
-      if (await chrome.offscreen.hasDocument()) return;
+      const contexts = await chrome.runtime.getContexts({
+        contextTypes: ['OFFSCREEN_DOCUMENT']
+      });
+      if (contexts && contexts.length > 0) return;
     } catch (e) {}
   }
   try {
@@ -24,8 +27,7 @@ async function ensureOffscreen() {
       reasons: ['AUDIO_PLAYBACK'],
       justification: 'Playing synthetic tab accountability alerts'
     });
-    // Brief breather for the document script to initialize
-    await new Promise(r => setTimeout(r, 80));
+    await new Promise(r => setTimeout(r, 100));
   } catch (err) {
     // Already created or in progress
   }
@@ -41,7 +43,6 @@ async function sendAudio(msg) {
 // ── Settings ──
 async function getSettings() {
   const d = await chrome.storage.local.get(['demoMode', 'muted']);
-  // Default to Demo mode true if unconfigured
   const demo = d.demoMode !== undefined ? !!d.demoMode : true;
   return { demo, muted: !!d.muted };
 }
