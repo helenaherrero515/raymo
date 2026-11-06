@@ -1,74 +1,90 @@
 <!DOCTYPE html>
 <html>
-<head><title>Micro-Screamer Audio Engine</title></head>
+<head><title>RayMo Audio Engine</title></head>
 <body>
 <script>
-/* ── Web Audio synth: one wobbly voice per neglected tab ── */
+/* ── RayMo Web Audio Synth: Multi-voice procedural screaming ── */
 
-const ctx = new AudioContext();
+let ctx = null;
 const voices = {};
 
+function getContext() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
+  return ctx;
+}
+
 chrome.runtime.onMessage.addListener(msg => {
-  if (msg.type === 'PLAY_AUDIO')  return playTab(msg.tabId, msg.stage);
-  if (msg.type === 'STOP_AUDIO')  return stopTab(msg.tabId);
-  if (msg.type === 'STOP_ALL')    return Object.keys(voices).forEach(id => stopTab(Number(id)));
+  if (msg.type === 'PLAY_AUDIO') return playTab(msg.tabId, msg.stage);
+  if (msg.type === 'STOP_AUDIO') return stopTab(msg.tabId);
+  if (msg.type === 'STOP_ALL')   return Object.keys(voices).forEach(id => stopTab(Number(id)));
 });
 
 /*
-  Each stage gets louder, higher-pitched, and harsher.
-  Per-tab offset keeps simultaneous screams from blending into one tone.
+  Each stage escalates in frequency, volume, and modulation:
+  Stage 0: 🥺 whimper
+  Stage 1: 😠 annoyance
+  Stage 2: 😡 loud confrontation
+  Stage 3: 🤬 drowning meltdown
 */
 const STAGES = [
-  // 🥺 whimper — soft sine, slow wobble, gentle pulse
-  { wave: 'sine',     freq: 180, vol: 0.04, vibHz: 4,  vibD: 25,  tremHz: 1.8, tremD: 0.035 },
-  // 😠 annoyed — nasal triangle, faster
-  { wave: 'triangle', freq: 280, vol: 0.07, vibHz: 6,  vibD: 45,  tremHz: 3.0, tremD: 0.055 },
-  // 😡 angry — harsh sawtooth
-  { wave: 'sawtooth', freq: 420, vol: 0.11, vibHz: 8,  vibD: 70,  tremHz: 5.0, tremD: 0.075 },
-  // 🤬 full scream — piercing square
-  { wave: 'square',   freq: 600, vol: 0.15, vibHz: 12, vibD: 120, tremHz: 8.0, tremD: 0.10  }
+  { wave: 'sine',     freq: 210, vol: 0.08, vibHz: 4.5, vibD: 30,  tremHz: 2.0, tremD: 0.05 },
+  { wave: 'triangle', freq: 320, vol: 0.13, vibHz: 6.5, vibD: 55,  tremHz: 3.5, tremD: 0.08 },
+  { wave: 'sawtooth', freq: 460, vol: 0.18, vibHz: 8.5, vibD: 85,  tremHz: 5.5, tremD: 0.11 },
+  { wave: 'square',   freq: 640, vol: 0.24, vibHz: 12.0, vibD: 130, tremHz: 8.5, tremD: 0.15 }
 ];
 
 function playTab(tabId, stage) {
   stopTab(tabId);
-  ctx.resume();
+  const audioCtx = getContext();
 
-  const c = STAGES[stage];
-  const offset = (tabId % 7) * 22;          // unique pitch per tab
+  const c = STAGES[stage] || STAGES[0];
+  const offset = (tabId % 7) * 26; // Detuning per tab so multiple tabs create a chorus
 
   // Main oscillator
-  const osc = ctx.createOscillator();
+  const osc = audioCtx.createOscillator();
   osc.type = c.wave;
   osc.frequency.value = c.freq + offset;
 
-  // Vibrato LFO → pitch wobble
-  const vib = ctx.createOscillator();
+  // Pitch Wobble (Vibrato)
+  const vib = audioCtx.createOscillator();
   vib.frequency.value = c.vibHz + (tabId % 3);
-  const vibGain = ctx.createGain();
+  const vibGain = audioCtx.createGain();
   vibGain.gain.value = c.vibD;
   vib.connect(vibGain).connect(osc.frequency);
 
-  // Tremolo LFO → volume pulse (sobbing / screaming effect)
-  const trem = ctx.createOscillator();
+  // Volume Tremolo Pulse (Sobbing / screeching)
+  const trem = audioCtx.createOscillator();
   trem.frequency.value = c.tremHz;
-  const tremGain = ctx.createGain();
+  const tremGain = audioCtx.createGain();
   tremGain.gain.value = c.tremD;
 
-  // Master gain
-  const master = ctx.createGain();
+  // Master Gain
+  const master = audioCtx.createGain();
   master.gain.value = c.vol;
   trem.connect(tremGain).connect(master.gain);
 
-  osc.connect(master).connect(ctx.destination);
+  osc.connect(master).connect(audioCtx.destination);
 
-  osc.start(); vib.start(); trem.start();
+  osc.start();
+  vib.start();
+  trem.start();
+
   voices[tabId] = { osc, vib, trem };
 }
 
 function stopTab(tabId) {
   const v = voices[tabId];
   if (!v) return;
-  try { v.osc.stop(); v.vib.stop(); v.trem.stop(); } catch {}
+  try {
+    v.osc.stop();
+    v.vib.stop();
+    v.trem.stop();
+  } catch (e) {}
   delete voices[tabId];
 }
 </script>
