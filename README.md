@@ -41,12 +41,12 @@
 
 ## About
 
-**Micro-Screamer** is a deadpan, enterprise-grade tab accountability Chrome extension built for the **Codex DevDay Mini Hackathon**.
+**Micro-Screamer (RayMo)** is a deadpan, enterprise-grade tab accountability Chrome extension built for the **Codex DevDay Mini Hackathon**.
 
 Are you a chronic tab hoarder with 50+ open tabs you will never read? Micro-Screamer makes your neglected tabs impossible to ignore. Left inactive past the idle limit (10 minutes normally, or 10 seconds in Demo mode), neglected tabs turn into guilt-tripping, screaming entities:
 
 - Their favicons hijack into escalating meme / emoji rage faces.
-- Their titles transform into urgent Taglish guilt-trips (*"bakit mo ako iniwan?"*, *"NAKA-SEEN LANG AKO??"*, *"WALA NA FINISH NA"*).
+- Their titles transform into urgent Taglish guilt-trips (*"bakit mo ako iniwan?"*, *"NAKA-SEEN LANG AKO??"*, *"LULUBOG NA AKO!!"*, *"WALA NA FINISH NA"*).
 - An offscreen Web Audio synthesizer generates distinct wobbly, microtonal screams for every single neglected tab.
 - The longer you ignore them, the louder, harsher, and higher-pitched the cacophony becomes.
 - Clicking any neglected tab immediately grants forgiveness: the audio stops and the original title and favicon are restored.
@@ -57,10 +57,10 @@ Are you a chronic tab hoarder with 50+ open tabs you will never read? Micro-Scre
 
 | Stage | Duration (Demo Mode) | Face & Favicon | Sample Title Line | Synth Audio Characteristics |
 | :-- | :-- | :-- | :-- | :-- |
-| **Stage 1: The Whimper** | 0 – 10s idle | 🥺 Crying | *"bakit mo ako iniwan?"* | Soft, wobbly sine wave with gentle vibrato |
-| **Stage 2: The Side-Eye** | 10 – 20s idle | 😠 Side-Eye | *"NAKA-SEEN LANG AKO??"* | Nasal triangle wave with rapid tremolo pulse |
-| **Stage 3: The Confrontation** | 20 – 30s idle | 😡 Furious | *"GRABE KA TALAGA"* | Harsh sawtooth wave, higher pitch & volume |
-| **Stage 4: The Meltdown** | 30s+ idle | 🤬 Meltdown | *"WALA NA FINISH NA"* | Piercing square wave at peak resonance |
+| **Stage 1: The Whimper** | 0 – 10s idle | 🥺 Crying (`face-cry.jpg`) | *"bakit mo ako iniwan?"* | Soft, wobbly sine wave with gentle vibrato |
+| **Stage 2: The Side-Eye** | 10 – 20s idle | 😠 Side-Eye (`face-sideye.jpg`) | *"NAKA-SEEN LANG AKO??"* | Nasal triangle wave with rapid tremolo pulse |
+| **Stage 3: The Confrontation** | 20 – 30s idle | 😡 Furious (`face-rage.jpg`) | *"GRABE KA TALAGA"* | Harsh sawtooth wave, higher pitch & volume |
+| **Stage 4: The Drowning Meltdown** | 30s+ idle | 🤬 Drowning Choke (`face-drown.jpg`) | *"LULUBOG NA AKO!! WALA NA FINISH NA"* | Piercing square wave at peak resonance |
 
 ---
 
@@ -114,7 +114,7 @@ flowchart TD
     E --> F["Stage 1: 🥺 Soft Whimper"]
     F --> G["Stage 2: 😠 Annoyed Side-Eye"]
     G --> H["Stage 3: 😡 Taglish Confrontation"]
-    H --> I["Stage 4: 🤬 Piercing Square Wave Scream"]
+    H --> I["Stage 4: 🤬 Drowning Choke & Square Wave Scream"]
     I --> J{"User clicks screaming tab?"}
     J -- Yes --> K["Instant forgiveness: restore title & favicon, kill synth voice"]
     J -- No --> I
@@ -135,13 +135,15 @@ smthfunny/
 │       └── logo.png          # Micro-Screamer angry mascot logo
 ├── face-cry.jpg              # Stage 1 Whimper meme face
 ├── face-sideye.jpg           # Stage 2 Side-Eye meme face
-├── face-rage.jpg             # Stage 3 & 4 Rage meme face
+├── face-rage.jpg             # Stage 3 Rage meme face
+├── face-drown.jpg            # Stage 4 Drowning Meltdown meme face
 ├── manifest.json             # Chrome Extension Manifest V3 configuration
 ├── background.js             # Background Service Worker tab monitor & state tracker
 ├── content.js                # In-page title & favicon injector + restorer
 ├── offscreen.html            # Web Audio API multi-voice synthesizer engine
 ├── popup.html                # Corporate toolbar popup with demo & mute toggles
 ├── index.html                # Interactive landing page & showcase
+├── micro-screamer.zip        # Direct one-click unpacked extension package
 └── README.md                 # Product documentation
 ```
 
@@ -176,13 +178,13 @@ None. Micro-Screamer only inspects tab IDs and idle timestamps locally within yo
 
 | GitHub | Project | Event |
 | :-- | :-- | :-- |
-| [@helenaherrero515](https://github.com/helenaherrero515) | Micro-Screamer — Tab Accountability System | Codex DevDay Mini Hackathon |
+| [@helenaherrero515](https://github.com/helenaherrero515) | RayMo (Micro-Screamer) — Tab Accountability System | Codex DevDay Mini Hackathon |
 
 ---
 
-© 2026 Micro-Screamer. Built for Codex DevDay Mini Hackathon. All rights reserved.
+© 2026 Micro-Screamer (RayMo). Built for Codex DevDay Mini Hackathon. All rights reserved.
 
 <p align="center">
-  <b>Micro-Screamer</b><br>
+  <b>RayMo: Micro-Screamer</b><br>
   Close your tabs. Free your RAM. End the screaming. 😱
 </p>
